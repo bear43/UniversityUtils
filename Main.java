@@ -10,6 +10,7 @@ import java.util.Random;
 
 class Vertex
 {
+    static int MAX_VERTEX;
     static int vertexCount;
     static String edgeName = "";
     static mxGraph graph;
@@ -58,7 +59,7 @@ class Vertex
         this.name = number + "-" + parentNumber;
         thisVertex = graph.insertVertex(parent, null, name, v, v1, v2, v3);
         Object childVertex;
-        for(Vertex child : child)
+        for (Vertex child : child)
         {
             child.thisParent = this;
             child.draw();
@@ -80,7 +81,7 @@ public class Main extends JFrame
 {
     private static final int MAX_CHILDREN = 5;
 
-    private static int MAX_VERTEX = 20;
+    private static int MAX_VERTEX = 200;
 
     public static void main(String[] args)
     {
@@ -97,6 +98,7 @@ public class Main extends JFrame
         Object parent = graph.getDefaultParent();
         Vertex.defaultParent = parent;
         Vertex.graph = graph;
+        Vertex.MAX_VERTEX = MAX_VERTEX;
         graph.getModel().beginUpdate();
         try
         {
@@ -115,11 +117,12 @@ public class Main extends JFrame
     }
     public void generateGraph(Vertex currentRoot)
     {
-        if(Vertex.vertexCount >= MAX_VERTEX) return;
+        //if(Vertex.vertexCount >= MAX_VERTEX) return;
         Random rand = new Random();
         Vertex vert;
         for(int i = 0; i < rand.nextInt(MAX_CHILDREN); i++)
         {
+            if(Vertex.vertexCount >= MAX_VERTEX) return;
             vert = new Vertex(null, 0, 0, 40, 15);
             currentRoot.child.add(vert);
             generateGraph(vert);
