@@ -10,29 +10,27 @@ import java.util.Random;
 
 class Vertex
 {
-    static int MAX_VERTEX;
     static int vertexCount;
-    static String edgeName = "";
     static mxGraph graph;
     static Object defaultParent;
-    Object parent;
-    int number;
-    int parentNumber;
-    String name;
-    int v;
-    int v1;
-    int v2;
-    int v3;
+    private Object parent;
+    private int number;
+    private int parentNumber;
+    private String name;
+    private int v;
+    private int v1;
+    private int v2;
+    private int v3;
     List<Vertex> child = new ArrayList<>();
-    Vertex thisParent;
+    private Vertex thisParent;
     private Object thisVertex;
 
 
-    public Vertex(String name, int v, int v1, int v2, int v3)
+    Vertex(String name, int v, int v1, int v2, int v3)
     {
         this(defaultParent, name, v, v1, v2, v3);
     }
-    public Vertex(Object parent, String name, int v, int v1, int v2, int v3)
+    private Vertex(Object parent, String name, int v, int v1, int v2, int v3)
     {
         vertexCount++;
         this.number = vertexCount;
@@ -53,22 +51,21 @@ class Vertex
     }
 
 
-    public void draw()
+    void draw()
     {
         this.parentNumber = thisParent != null ? thisParent.number : 0;
         this.name = number + "-" + parentNumber;
         thisVertex = graph.insertVertex(parent, null, name, v, v1, v2, v3);
-        Object childVertex;
         for (Vertex child : child)
         {
             child.thisParent = this;
             child.draw();
-            graph.insertEdge(parent, null, edgeName, thisVertex, child.thisVertex);
+            graph.insertEdge(parent, null, "", thisVertex, child.thisVertex);
         }
     }
 
 
-    public void show()
+    void show()
     {
         mxHierarchicalLayout layout = new mxHierarchicalLayout(graph);
         layout.setUseBoundingBox(false);
@@ -81,28 +78,30 @@ public class Main extends JFrame
 {
     private static final int MAX_CHILDREN = 5;
 
-    private static int MAX_VERTEX = 200;
+    private static final int MAX_VERTEX = 200;
+
+    private static Random rand = new Random();
+
+    private static Vertex root;
 
     public static void main(String[] args)
     {
         Main frame = new Main();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setSize(1024, 768);
+        frame.setSize(640, 480);
         frame.setVisible(true);
     }
-    public Main()
+    private Main()
     {
         super("Graph");
 
         mxGraph graph = new mxGraph();
-        Object parent = graph.getDefaultParent();
-        Vertex.defaultParent = parent;
+        Vertex.defaultParent = graph.getDefaultParent();
         Vertex.graph = graph;
-        Vertex.MAX_VERTEX = MAX_VERTEX;
         graph.getModel().beginUpdate();
         try
         {
-            Vertex root = new Vertex(null, 0, 0, 40, 15);
+            root = new Vertex(null, 0, 0, 30, 15);
             generateGraph(root);
             root.draw();
             root.show();
@@ -115,18 +114,17 @@ public class Main extends JFrame
         mxGraphComponent graphComponent = new mxGraphComponent(graph);
         getContentPane().add(graphComponent);
     }
-    public void generateGraph(Vertex currentRoot)
+    private void generateGraph(Vertex currentRoot)
     {
-        //if(Vertex.vertexCount >= MAX_VERTEX) return;
-        Random rand = new Random();
         Vertex vert;
-        for(int i = 0; i < rand.nextInt(MAX_CHILDREN); i++)
+        int count = rand.nextInt(MAX_CHILDREN);
+        for(int i = 0; i < count; i++)
         {
             if(Vertex.vertexCount >= MAX_VERTEX) return;
-            vert = new Vertex(null, 0, 0, 40, 15);
+            vert = new Vertex(null, 0, 0, 30, 15);
             currentRoot.child.add(vert);
-            generateGraph(vert);
         }
+        for(Vertex v : currentRoot.child) generateGraph(v);
     }
 
 }
