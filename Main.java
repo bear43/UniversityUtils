@@ -7,6 +7,7 @@ import com.mxgraph.view.mxGraph;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 class Vertex
 {
@@ -76,9 +77,9 @@ class Vertex
 
 public class Main extends JFrame
 {
-    private static final int MAX_CHILDREN = 5;
+    private static int MAX_CHILDREN ;
 
-    private static final int MAX_VERTEX = 200;
+    private static int MAX_VERTEX ;
 
     private static Random rand = new Random();
 
@@ -86,6 +87,11 @@ public class Main extends JFrame
 
     public static void main(String[] args)
     {
+        Scanner scn = new Scanner(System.in);
+        System.out.print("Кол-во вершин(узлов): ");
+        MAX_VERTEX = scn.nextInt();
+        System.out.print("Максимальное кол-во потомков от одной вершины: ");
+        MAX_CHILDREN = scn.nextInt();
         Main frame = new Main();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setSize(640, 480);
@@ -118,6 +124,8 @@ public class Main extends JFrame
     {
         Vertex vert;
         int count = rand.nextInt(MAX_CHILDREN);
+        //while(count == 0)
+          //  count = rand.nextInt(MAX_CHILDREN);
         for(int i = 0; i < count; i++)
         {
             if(Vertex.vertexCount >= MAX_VERTEX) return;
