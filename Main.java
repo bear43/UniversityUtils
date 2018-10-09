@@ -108,7 +108,7 @@ public class Main extends JFrame
         try
         {
             root = new Vertex(null, 0, 0, 30, 15);
-            generateGraph(root);
+            generateGraph(new Vertex[] {root});
             root.draw();
             root.show();
         }
@@ -120,19 +120,28 @@ public class Main extends JFrame
         mxGraphComponent graphComponent = new mxGraphComponent(graph);
         getContentPane().add(graphComponent);
     }
-    private void generateGraph(Vertex currentRoot)
+    private void generateGraph(Vertex[] thisLevelRoots)
     {
+        if(thisLevelRoots.length == 0) return;
         Vertex vert;
-        int count = rand.nextInt(MAX_CHILDREN);
-        //while(count == 0)
-          //  count = rand.nextInt(MAX_CHILDREN);
-        for(int i = 0; i < count; i++)
+        List<Vertex> children = new ArrayList<>();
+        int count;
+        boolean ok = false;
+        for(int a = 0; a < thisLevelRoots.length; a++)
         {
-            if(Vertex.vertexCount >= MAX_VERTEX) return;
-            vert = new Vertex(null, 0, 0, 30, 15);
-            currentRoot.child.add(vert);
+            count = rand.nextInt(MAX_CHILDREN);
+            if(count != 0) ok = true;
+            if(a == thisLevelRoots.length-1 && !ok)
+                while(count == 0)
+                    count = rand.nextInt(MAX_CHILDREN);
+            for (int i = 0; i < count; i++)
+            {
+                if (Vertex.vertexCount >= MAX_VERTEX) return;
+                vert = new Vertex(null, 0, 0, 30, 15);
+                children.add(vert);
+                thisLevelRoots[a].child.add(vert);
+            }
         }
-        for(Vertex v : currentRoot.child) generateGraph(v);
+        generateGraph(children.toArray(new Vertex[0]));
     }
-
 }
