@@ -1,8 +1,11 @@
 import javax.swing.*;
 
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
+import com.mxgraph.model.mxGeometry;
 import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.util.mxConstants;
 import com.mxgraph.view.mxGraph;
+import com.mxgraph.view.mxStylesheet;
 
 import java.io.FileWriter;
 import java.util.ArrayList;
@@ -58,6 +61,7 @@ class Vertex
         this.parentNumber = thisParent != null ? thisParent.number : 0;
         this.name = number + "-" + parentNumber;
         thisVertex = graph.insertVertex(parent, null, name, v, v1, v2, v3);
+        graph.updateCellSize(thisVertex);
         for (Vertex child : child)
         {
             child.thisParent = this;
@@ -111,6 +115,8 @@ public class Main extends JFrame
 
     private static boolean MIN_GENERATION;
 
+    private static int FONT_SIZE = 11;
+
     private static Random rand = new Random();
 
     private static int width = 30;
@@ -134,6 +140,8 @@ public class Main extends JFrame
             answer = scn.next();
             MIN_GENERATION = answer.toLowerCase().equals("y");
         }
+        System.out.print("Размер шрифта: ");
+        FONT_SIZE = scn.nextInt();
         Main frame = new Main();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setSize(640, 480);
@@ -150,6 +158,9 @@ public class Main extends JFrame
         graph.getModel().beginUpdate();
         try
         {
+            mxStylesheet style = new mxStylesheet();
+            style.getDefaultVertexStyle().put(mxConstants.STYLE_FONTSIZE, FONT_SIZE);
+            graph.setStylesheet(style);
             root = new Vertex(null, 0, 0, width, height);
             generateGraph(new Vertex[] {root});
             root.draw();
