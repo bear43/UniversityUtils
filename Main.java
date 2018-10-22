@@ -81,7 +81,14 @@ public class Main extends JFrame
 
     private static int MAX_VERTEX ;
 
+    private static int MIN_CHILDREN;
+
+    private static boolean MIN_GENERATION;
+
     private static Random rand = new Random();
+
+    private static int width = 30;
+    private static int height = 12;
 
     private static Vertex root;
 
@@ -91,7 +98,16 @@ public class Main extends JFrame
         System.out.print("Кол-во вершин(узлов): ");
         MAX_VERTEX = scn.nextInt();
         System.out.print("Максимальное кол-во потомков от одной вершины: ");
-        MAX_CHILDREN = scn.nextInt();
+        MAX_CHILDREN = scn.nextInt()+1;
+        System.out.print("Минимальное кол-во потомков от одной вершины: ");
+        MIN_CHILDREN = scn.nextInt();
+        if (MIN_CHILDREN == 0)
+        {
+            String answer;
+            System.out.print("Принудительно генерировать все дерево вершин(Хотя бы одна вершина на уровне дает потомка)(Y/N): ");
+            answer = scn.next();
+            MIN_GENERATION = answer.toLowerCase().equals("y");
+        }
         Main frame = new Main();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setSize(640, 480);
@@ -102,12 +118,13 @@ public class Main extends JFrame
         super("Graph");
 
         mxGraph graph = new mxGraph();
+        graph.setAutoSizeCells(true);
         Vertex.defaultParent = graph.getDefaultParent();
         Vertex.graph = graph;
         graph.getModel().beginUpdate();
         try
         {
-            root = new Vertex(null, 0, 0, 30, 15);
+            root = new Vertex(null, 0, 0, width, height);
             generateGraph(new Vertex[] {root});
             root.draw();
             root.show();
@@ -131,13 +148,12 @@ public class Main extends JFrame
         {
             count = rand.nextInt(MAX_CHILDREN);
             if(count != 0) ok = true;
-            if(a == thisLevelRoots.length-1 && !ok)
-                while(count == 0)
-                    count = rand.nextInt(MAX_CHILDREN);
+            while(count < MIN_CHILDREN || (MIN_GENERATION && !ok && count == 0 && thisLevelRoots.length-1-a == 0))
+                count = rand.nextInt(MAX_CHILDREN);
             for (int i = 0; i < count; i++)
             {
                 if (Vertex.vertexCount >= MAX_VERTEX) return;
-                vert = new Vertex(null, 0, 0, 30, 15);
+                vert = new Vertex(null, 0, 0, width, height);
                 children.add(vert);
                 thisLevelRoots[a].child.add(vert);
             }
