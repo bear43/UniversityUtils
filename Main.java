@@ -4,6 +4,7 @@ import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.view.mxGraph;
 
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -73,6 +74,31 @@ class Vertex
 
         layout.execute(parent);
     }
+
+    @Override
+    public String toString()
+    {
+        return this.name;
+    }
+
+    private static void getVertices(List<Vertex> out, List<Vertex> currentLevelVertices)
+    {
+        if(currentLevelVertices.size() == 0) return;
+        out.addAll(currentLevelVertices);
+        ArrayList<Vertex> nextLevelVertices = new ArrayList<>();
+        for(Vertex vertex : currentLevelVertices)
+            nextLevelVertices.addAll(vertex.child);
+        getVertices(out, nextLevelVertices);
+    }
+
+    List<Vertex> getAllVertices()
+    {
+        List<Vertex> vertices = new ArrayList<>();
+        List<Vertex> ret = new ArrayList<>();
+        vertices.add(this);
+        getVertices(ret, vertices);
+        return ret;
+    }
 }
 
 public class Main extends JFrame
@@ -92,7 +118,7 @@ public class Main extends JFrame
 
     private static Vertex root;
 
-    public static void main(String[] args)
+    public static void main(String[] args) throws Exception
     {
         Scanner scn = new Scanner(System.in);
         System.out.print("Кол-во вершин(узлов): ");
@@ -113,7 +139,7 @@ public class Main extends JFrame
         frame.setSize(640, 480);
         frame.setVisible(true);
     }
-    private Main()
+    private Main() throws Exception
     {
         super("Graph");
 
@@ -136,7 +162,24 @@ public class Main extends JFrame
 
         mxGraphComponent graphComponent = new mxGraphComponent(graph);
         getContentPane().add(graphComponent);
+
+        FileWriter vertexTableFile = new FileWriter("Vertex_table.txt");
+        FileWriter singleVertexTableFile = new FileWriter("Single_Vertex_Table.txt");
+        printVertices(root.getAllVertices(), vertexTableFile, singleVertexTableFile);
+        vertexTableFile.close();
+        singleVertexTableFile.close();
     }
+
+    private void printVertices(List<Vertex> vertices, FileWriter vertexTableFile, FileWriter singleVertexTableFile) throws Exception
+    {
+        for(Vertex vertex : vertices)
+        {
+            if(vertex.child.size() == 0)
+                singleVertexTableFile.append(vertex.toString()).append(",");
+            vertexTableFile.append(vertex.toString()).append(",");
+        }
+    }
+
     private void generateGraph(Vertex[] thisLevelRoots)
     {
         if(thisLevelRoots.length == 0) return;
