@@ -1,7 +1,6 @@
 import javax.swing.*;
 
 import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
-import com.mxgraph.model.mxGeometry;
 import com.mxgraph.swing.mxGraphComponent;
 import com.mxgraph.util.mxConstants;
 import com.mxgraph.view.mxGraph;
@@ -71,9 +70,11 @@ class Vertex
     }
 
 
-    void show()
+    void show(int horizontalSpaces, int verticalSpaces)
     {
         mxHierarchicalLayout layout = new mxHierarchicalLayout(graph);
+        layout.setIntraCellSpacing(horizontalSpaces);
+        layout.setInterRankCellSpacing(verticalSpaces);
         layout.setUseBoundingBox(false);
 
         layout.execute(parent);
@@ -117,6 +118,16 @@ public class Main extends JFrame
 
     private static int FONT_SIZE = 11;
 
+    private static int HORIZONTAL_SPACES;
+
+    private static int VERTICAL_SPACES;
+
+    private static final String VERTEX_FILE = "Vertex_table.txt";
+
+    private static final String SINGLE_VERTEX_FILE = "Single_vertex_table.txt";
+
+    private static final String EDGE_STATISTIC_FILE = "Edge_statistic.txt";
+
     private static Random rand = new Random();
 
     private static int width = 30;
@@ -142,6 +153,10 @@ public class Main extends JFrame
         }
         System.out.print("Размер шрифта: ");
         FONT_SIZE = scn.nextInt();
+        System.out.print("Кол-во пробелов между вершинами(горизонтально): ");
+        HORIZONTAL_SPACES = scn.nextInt();
+        System.out.print("Кол-во пробелов между вершинами(вертикально): ");
+        VERTICAL_SPACES = scn.nextInt();
         Main frame = new Main();
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         frame.setSize(640, 480);
@@ -164,7 +179,7 @@ public class Main extends JFrame
             root = new Vertex(null, 0, 0, width, height);
             generateGraph(new Vertex[] {root});
             root.draw();
-            root.show();
+            root.show(HORIZONTAL_SPACES, VERTICAL_SPACES);
         }
         finally
         {
@@ -173,22 +188,36 @@ public class Main extends JFrame
 
         mxGraphComponent graphComponent = new mxGraphComponent(graph);
         getContentPane().add(graphComponent);
-
-        FileWriter vertexTableFile = new FileWriter("Vertex_table.txt");
-        FileWriter singleVertexTableFile = new FileWriter("Single_Vertex_Table.txt");
-        printVertices(root.getAllVertices(), vertexTableFile, singleVertexTableFile);
+        FileWriter vertexTableFile = new FileWriter(VERTEX_FILE);
+        FileWriter singleVertexTableFile = new FileWriter(SINGLE_VERTEX_FILE);
+        FileWriter statisticFile = new FileWriter(EDGE_STATISTIC_FILE);
+        List<Vertex> leveledRoots = root.getAllVertices();
+        int singleVerticesCount = printVertices(leveledRoots, vertexTableFile, singleVertexTableFile);
         vertexTableFile.close();
         singleVertexTableFile.close();
+        int[] edgeCount = new int[MAX_CHILDREN+1];
+        for(Vertex vertex : leveledRoots)
+            edgeCount[vertex.child.size()]++;
+        for(int i = 0; i < edgeCount.length; i++)
+            statisticFile.append((String.valueOf(i+1))).append(" : ").append(String.valueOf(edgeCount[i])).append("\n");
+        statisticFile.close();
+        System.out.println("Всего вершин: " + leveledRoots.size() + " | Всего висячих вершин: " + singleVerticesCount);
+        System.out.println("Alpha = " + (double)(leveledRoots.size()/singleVerticesCount));
     }
 
-    private void printVertices(List<Vertex> vertices, FileWriter vertexTableFile, FileWriter singleVertexTableFile) throws Exception
+    private int printVertices(List<Vertex> vertices, FileWriter vertexTableFile, FileWriter singleVertexTableFile) throws Exception
     {
+        int singleVertexCount = 0;
         for(Vertex vertex : vertices)
         {
             if(vertex.child.size() == 0)
+            {
                 singleVertexTableFile.append(vertex.toString()).append(",");
+                singleVertexCount++;
+            }
             vertexTableFile.append(vertex.toString()).append(",");
         }
+        return singleVertexCount;
     }
 
     private void generateGraph(Vertex[] thisLevelRoots)
