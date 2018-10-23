@@ -28,6 +28,7 @@ class Vertex
     List<Vertex> child = new ArrayList<>();
     private Vertex thisParent;
     private Object thisVertex;
+    int levelsCount;
 
 
     Vertex(String name, int v, int v1, int v2, int v3)
@@ -86,14 +87,16 @@ class Vertex
         return this.name;
     }
 
-    private static void getVertices(List<Vertex> out, List<Vertex> currentLevelVertices)
+    private static int getVertices(List<Vertex> out, List<Vertex> currentLevelVertices)
     {
-        if(currentLevelVertices.size() == 0) return;
+        int ans = 1;
+        if(currentLevelVertices.size() == 0) return 1;
         out.addAll(currentLevelVertices);
         ArrayList<Vertex> nextLevelVertices = new ArrayList<>();
         for(Vertex vertex : currentLevelVertices)
             nextLevelVertices.addAll(vertex.child);
-        getVertices(out, nextLevelVertices);
+        ans += getVertices(out, nextLevelVertices);
+        return ans;
     }
 
     List<Vertex> getAllVertices()
@@ -101,7 +104,7 @@ class Vertex
         List<Vertex> vertices = new ArrayList<>();
         List<Vertex> ret = new ArrayList<>();
         vertices.add(this);
-        getVertices(ret, vertices);
+        levelsCount = getVertices(ret, vertices)-1;
         return ret;
     }
 }
@@ -122,11 +125,17 @@ public class Main extends JFrame
 
     private static int VERTICAL_SPACES;
 
-    private static final String VERTEX_FILE = "Vertex_table.txt";
+    private static final String VERTEX_FILE = "Vertex_table";
 
-    private static final String SINGLE_VERTEX_FILE = "Single_vertex_table.txt";
+    private static final String SINGLE_VERTEX_FILE = "Single_vertex_table";
 
-    private static final String EDGE_STATISTIC_FILE = "Edge_statistic.txt";
+    private static final String EDGE_STATISTIC_FILE = "Edge_statistic";
+
+    private static boolean DRAW_MODE = true;
+
+    private static int GENERATION_COUNT = 1;
+
+    private static int CURRENT_GENERATION = 0;
 
     private static Random rand = new Random();
 
@@ -151,58 +160,106 @@ public class Main extends JFrame
             answer = scn.next();
             MIN_GENERATION = answer.toLowerCase().equals("y");
         }
-        System.out.print("Размер шрифта: ");
-        FONT_SIZE = scn.nextInt();
-        System.out.print("Кол-во пробелов между вершинами(горизонтально): ");
-        HORIZONTAL_SPACES = scn.nextInt();
-        System.out.print("Кол-во пробелов между вершинами(вертикально): ");
-        VERTICAL_SPACES = scn.nextInt();
-        Main frame = new Main();
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setSize(640, 480);
-        frame.setVisible(true);
+        System.out.print("Отрисовывать графы?(Y/N): ");
+        DRAW_MODE = scn.next().toLowerCase().equals("y");
+        if(DRAW_MODE)
+        {
+            System.out.print("Размер шрифта: ");
+            FONT_SIZE = scn.nextInt();
+            System.out.print("Кол-во пробелов между вершинами(горизонтально): ");
+            HORIZONTAL_SPACES = scn.nextInt();
+            System.out.print("Кол-во пробелов между вершинами(вертикально): ");
+            VERTICAL_SPACES = scn.nextInt();
+            Main frame = new Main();
+            frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+            frame.setSize(640, 480);
+            frame.setVisible(true);
+        }
+        else
+        {
+            System.out.print("Кол-во генераций: ");
+            GENERATION_COUNT = scn.nextInt();
+            new Main();
+        }
     }
     private Main() throws Exception
     {
         super("Graph");
-
-        mxGraph graph = new mxGraph();
-        graph.setAutoSizeCells(true);
-        Vertex.defaultParent = graph.getDefaultParent();
-        Vertex.graph = graph;
-        graph.getModel().beginUpdate();
+        mxGraph graph = null;
         try
         {
-            mxStylesheet style = new mxStylesheet();
-            style.getDefaultVertexStyle().put(mxConstants.STYLE_FONTSIZE, FONT_SIZE);
-            graph.setStylesheet(style);
-            root = new Vertex(null, 0, 0, width, height);
-            generateGraph(new Vertex[] {root});
-            root.draw();
-            root.show(HORIZONTAL_SPACES, VERTICAL_SPACES);
+            if(DRAW_MODE)
+            {
+                graph = new mxGraph();
+                graph.setAutoSizeCells(true);
+                Vertex.defaultParent = graph.getDefaultParent();
+                Vertex.graph = graph;
+                graph.getModel().beginUpdate();
+                mxStylesheet style = new mxStylesheet();
+                style.getDefaultVertexStyle().put(mxConstants.STYLE_FONTSIZE, FONT_SIZE);
+                graph.setStylesheet(style);
+                root = new Vertex(null, 0, 0, width, height);
+                generateGraph(new Vertex[]{root});
+                root.draw();
+                root.show(HORIZONTAL_SPACES, VERTICAL_SPACES);
+            }
         }
         finally
         {
-            graph.getModel().endUpdate();
+            if(DRAW_MODE) graph.getModel().endUpdate();
         }
-
-        mxGraphComponent graphComponent = new mxGraphComponent(graph);
-        getContentPane().add(graphComponent);
-        FileWriter vertexTableFile = new FileWriter(VERTEX_FILE);
-        FileWriter singleVertexTableFile = new FileWriter(SINGLE_VERTEX_FILE);
-        FileWriter statisticFile = new FileWriter(EDGE_STATISTIC_FILE);
-        List<Vertex> leveledRoots = root.getAllVertices();
-        int singleVerticesCount = printVertices(leveledRoots, vertexTableFile, singleVertexTableFile);
-        vertexTableFile.close();
-        singleVertexTableFile.close();
-        int[] edgeCount = new int[MAX_CHILDREN+1];
-        for(Vertex vertex : leveledRoots)
-            edgeCount[vertex.child.size()]++;
-        for(int i = 0; i < edgeCount.length; i++)
-            statisticFile.append((String.valueOf(i+1))).append(" : ").append(String.valueOf(edgeCount[i])).append("\n");
-        statisticFile.close();
-        System.out.println("Всего вершин: " + leveledRoots.size() + " | Всего висячих вершин: " + singleVerticesCount);
-        System.out.println("Alpha = " + (double)(leveledRoots.size()/singleVerticesCount));
+        if(DRAW_MODE)
+        {
+            mxGraphComponent graphComponent = new mxGraphComponent(graph);
+            getContentPane().add(graphComponent);
+        }
+        FileWriter vertexTableFile = null;
+        FileWriter singleVertexTableFile = null;
+        FileWriter statisticFile = null;
+        FileWriter commonFile = new FileWriter("Common_table.txt");
+        List<Vertex> leveledRoots;
+        int singleVerticesCount;
+        int[] edgeCount;
+        Vertex root = Main.root;
+        //vars ended
+        for(int a = 0; a < GENERATION_COUNT; a++)
+        {
+            if (!DRAW_MODE)
+            {
+                Vertex.vertexCount = 0;
+                root = new Vertex(null, 0, 0, 0, 0);
+                generateGraph(new Vertex[]{root});
+                CURRENT_GENERATION++;
+            }
+            if (DRAW_MODE)
+            {
+                vertexTableFile = new FileWriter(VERTEX_FILE + CURRENT_GENERATION + ".txt");
+                singleVertexTableFile = new FileWriter(SINGLE_VERTEX_FILE + CURRENT_GENERATION + ".txt");
+                statisticFile = new FileWriter(EDGE_STATISTIC_FILE + CURRENT_GENERATION + ".txt");
+            }
+            leveledRoots = root.getAllVertices();
+            singleVerticesCount = printVertices(leveledRoots, vertexTableFile, singleVertexTableFile);
+            commonFile.append(String.valueOf(CURRENT_GENERATION)).append(" ").
+                    append(String.valueOf((double)leveledRoots.size()/(double)singleVerticesCount)).append(" ").
+                    append(String.valueOf(leveledRoots.size())).append(" ").
+                    append(String.valueOf(singleVerticesCount)).append(" ").
+                    append(String.valueOf(root.levelsCount)).append("\n");
+            if (DRAW_MODE)
+            {
+                vertexTableFile.close();
+                singleVertexTableFile.close();
+                edgeCount = new int[MAX_CHILDREN + 1];
+                for (Vertex vertex : leveledRoots)
+                    edgeCount[vertex.child.size()]++;
+                for (int i = 0; i < edgeCount.length; i++)
+                    statisticFile.append((String.valueOf(i + 1))).append(" : ").append(String.valueOf(edgeCount[i])).append("\n");
+                statisticFile.close();
+                System.out.println("Всего вершин: " + leveledRoots.size() + " | Всего висячих вершин: " + singleVerticesCount);
+                System.out.println("Alpha = " + (double) (leveledRoots.size()) / (double) (singleVerticesCount));
+                System.out.println("Кол-во уровней: " + root.levelsCount);
+            }
+        }
+        commonFile.close();
     }
 
     private int printVertices(List<Vertex> vertices, FileWriter vertexTableFile, FileWriter singleVertexTableFile) throws Exception
@@ -212,10 +269,10 @@ public class Main extends JFrame
         {
             if(vertex.child.size() == 0)
             {
-                singleVertexTableFile.append(vertex.toString()).append(",");
+                if(DRAW_MODE)singleVertexTableFile.append(vertex.toString()).append(",");
                 singleVertexCount++;
             }
-            vertexTableFile.append(vertex.toString()).append(",");
+            if(DRAW_MODE)vertexTableFile.append(vertex.toString()).append(",");
         }
         return singleVertexCount;
     }
